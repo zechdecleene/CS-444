@@ -1,0 +1,78 @@
+\documentclass[a4paper,10pt,onecolumn]{article}
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+        
+        \textbf{Writing Assignment 1}
+        
+        \vspace{0.5cm}
+        CS444 Spring 2018
+        
+        \vspace{1.5cm}
+        
+        \textbf{Zech DeCleene}       
+    \end{center}
+\end{titlepage}
+
+
+\section{Processes, Threads, and CPU Scheduling}
+In Windows, FreeBSD, and Linux a process is defined as a running program. 
+\newline
+\newline
+\subsection{Windows}
+In windows the process is a structure that contains a virtual address space, executable code, open handles to system objects, security context, process identifiers, environmental variables, priority classes, a minimum and maximum set size, and at least one thread of execution. Each process in windows is started by a single thread, often called a primary thread. The primary thread is the beginning execution point from which any of its threads can create additional threads. \cite{about}
+\newline
+\newline
+Windows supports a feature called Preemptive Multitasking which allows the system to simultaneously execute as many threads as there are on the computer's processor. There are two main architectures for computers with multiple processors.
+\subsubsection{{N}on-{U}niform {M}emory {A}cess {(NUMA)}}
+The NUMA architecture is typically used to speed up processing speeds without putting more load on the processor bus. It does this because different processors are located closer to some parts of memory while farther from others. This allows the scheduler to assign CPU's to locations in memory that are closer to that processor allowing for quicker access to that part in memory.
+\newline
+\subsubsection{{S}ymmetric {M}ulti{P}rocessing {(SMP)}}
+The SMP Architecture, sometimes called the "shared everything" system, is a tightly coupled system that allows for multiprocessing and has shared memory and shared I/O buses or data paths. The advantage to this system is its ability to dynamically balance workloads between multiple processors.
+\newline
+\newline
+Lastly, windows uses something called the system scheduler to control multitasking. The system scheduler determines which thread receives the next processor time slice. The system scheduler uses a priority system that ranges from 0-31. Priority levels 0-15 are known as "normal" priorities while processes with a priority level of 16-31 have soft real-time priority.\cite{wikipedia_2018}
+\newline
+\newline
+\subsection{FreeBSD}
+FreeBSD is a lot like traditional UNIX, however unlike traditional UNIX which doesn't have any API or implementation for threading, FreeBSD does. FreeBSD is a called the modern UNIX with all the functionality of UNIX as well as preemptive multitasking and symmetrical multiprocessing support.\cite{bsd}
+\newline
+\newline
+The CPU scheduler in FreeBSD is divided into two parts. The low level scheduler and the high level scheduler.
+\subsubsection{The Low Level Scheduler}
+The low level scheduler is a simple scheduler that is meant to run very frequently. The low level scheduler runs every time a thread blocks and a new thread must be selected to run. This typically happens several thousands of times per second and as a result needs to make decisions very quickly with minimal information. To simplify the task the kernel maintains a run queue for each CPU in the system. When a task blocks the low level scheduler checks the run queue to determine which thread will run next.
+\newline
+\subsubsection{The High Level Scheduler}
+The high level scheduler is responsible for setting thread priorities to the run queue as well as what CPU's run queue the thread should be placed. To avoid contention each CPU has its own run queue for when two CPU's need a new thread at the same time. 
+\newline
+\newline
+\subsection{Linux}
+Like all the other operating systems mentioned, in linux a process is defined as a program in execution. Linux has two main types of processes, foreground and background.\newline
+Unlike the other operating systems mentioned, however, Linux has a unique implementation of threads. Each thread is implemented as a standard processes, meaning there is no special scheduling semantics or data structures. The kernel has no concept of a thread.
+\newline
+\newline
+Linux uses what is called a {C}ompletely {F}air {S}cheduling {(CFS)} algorithm. Each CPU has a run queue with time-slices for each process to run. The time-slices are alotted based on the a weight metric for each thread. Each CPU needs its own run queue so that context switching can be quicker. This creates the problem of load balancing the threads across all the CPUs. Because thread balancing is an expensive process the scheduler tries to do this only when necessary. \cite{themorningpaper}
+
+\section{Conclusion}
+One thing that each of these different operating systems do differently how they manage their threads. An operating system like Windows treats a thread as a lightweight process or an abstraction to provide quicker execution by allowing for multiprocessor work without creating another more taxing process. Linux however treats threads differently as they are a method for sharing resources between processes.\cite{love_2005} 
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{sample}
+
+\end{document}

@@ -1,0 +1,75 @@
+\documentclass[letterpaper, 10pt, draftclsnofoot,onecolumn]{article}
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+
+
+%% Sets page size and margins
+\usepackage[letterpaper, margin=0.75in]{geometry}
+
+\title{Writing 2 - CS444}
+\author{Zech DeCleene (decleenz)}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+In this paper we will be talking about the different methods of I/O in different operating systems and their similarities and differences. We will be looking at 3 I/O architectures. We will be looking at Windows, FreeBSD, and Linux to make our comparisons.
+\end{abstract}
+
+\section{Windows}
+Windows processes I/O using something called I/O package requests or (IPRs) and Asynchronous I/O.
+Asynchronous I/O is required because I/O operations are typically much slower that simply processing data. The reason for this is because often I/O devices typically require the incorporation of mechanical devises which are orders of magnitude slower than electrical signals. 
+Being asynchronous, however, allows for new issues such as resource conflicts and other associated issues.
+\newline
+\newline
+Polling is a feature that allows for non-blocking synchronous I/O. Polling works by constantly checking the state or contents of the event buffer. Polling has one major drawback however and that is that it can waste CPU time by polling an idle I/O device. A good use for polling is typically in real-time gaming that are often always updating and rendering and are not often idle.
+\newline
+\newline
+I/O Package requests are data structures that describe the I/O request. Things such as buffer address, buffer size, and I/O function type. However, when the I/O data needs to be accessed, rather than passing a large number of smaller arguments, windows passes a single pointer that points to a persistent data structure. In addition the IRP can be put in a queue if the request cannot be performed immediately. Lastly, the I/O requests have a method to report completion. When a request is completed it reports back to the I/O manager by passing an address back to a routine for that purpose, the IoCompleteRequest routine.
+\newpage
+\section{FreeBSD}
+In Free BSD they use descriptors to reference I/O streams. A descriptor is a small unsigned integer that are obtained from the open and socket system calls. Descriptors are used to represent underlying objects supported by the kernel and are created by system calls for each specific object. Each descriptor then can have a read or write call made on them to transfer data. FreeBSD supports 3 main types of object descriptors; File, pipes, and sockets.
+\newline
+The first type of descriptor is the file descriptor. It is simply a linear array of bytes with at least one name. External I/O devices are also accessed via file descriptor. File descriptors exist until all names are deleted explicitly and no process holds a descriptor for it. 
+\newline
+The next type of descriptor is the pipe. Like a file, a pipe, is also a linear array of bytes. However, a pipe is solely used as an I/O stream. Pipes do not have names and so cannot be created using the open call. Instead they are created via the pipe system call and two descriptors are returned. One descriptor which accepts input and the other where the data is sent. Pipes are unidirectional so data only flows one way and are received in the order in which they are sent.
+\newline
+The last type of descriptor is the socket. A socket is a transient object that is used for interprocess communication and it only exists as long as there is a process that holds a descriptor of it. There are many different kinds of sockets that support various constraints such as preserving order, or reliability of delivery.
+\newline
+\newline
+\section{Linux}
+The Last operating system we will be talking about is the Linux operating system.The Linux machine provides the abstract machine interface, as device drivers, to the user. These device drivers take a hardware interface and remap it onto a standard interface with the kernel. For example all character devices have the same interface with the kernel. They are treated as files and have their information in a linear stream of bytes, much like FreeBSD. There are 5 ways device drivers typically operate:
+\begin{enumerate}
+\item Direct Memory Access (DMA). DMA works by first having the CPU initiate the transfer to the auxiliary hardware making the request, thus freeing the CPU to perform other tasks while the DMA device receives the data. Once the operation is completed it sends a signal back to notify that the process has been completed.
+\item Interrupt driven I/O is the next operation method of device drivers and it pairs with the last method. Through the use of a DMA or other external controller, I/O happens asynchronously and when completed it raises an interrupt signal.
+\item Processor I/O allows the CPU itself to handle all of the details of the I/O. This method is often very poor in performance.
+\item Polled I/O repeatedly checks the state of an event buffer on a loop. The process continues to check indefinitely and is a waste of CPU time when used on an idle device. USB devices are commonly known to use polling I/O.
+\item Memory Mapped I/O (MMIO) uses hardware registers that are mapped directly to the CPU's address space. Arduinos are a common example of MMIO in their use of macro's such as referring to a pin via PIN(\#).
+\end{enumerate}
+The other way Linux handles I/O is with something called a Block Device. In contrast with a character device, in which the data behaves as a stream of bytes, Block devices are random access, meaning the data does not need to be lined up. Block devices work by taking chunks of data of a fixed size. Each chunk of data, called a \textbf{sector}, defines the minimum addressable unit. The sizes of these sectors are hardware specific and are dependent of the driver developers. In software however blocks refer to the filesystem block size. Each read/write operation works in terms of complete blocks. 
+\newline
+The last thing I want to mention about the Linux I/O system is the use of elevators. Because a majority of the I/O devices used today are mechanical in nature (for example a hard disk drive) a series of algorithms have been developed to help minimize wasted time. These algorithms are known as elevators. One example of how these work, much like how real elevators work, is by sweeping in one direction until all requests are completed in that direction before turning around (or continuing back around to the start). This helps to reduce wasted time of the mechanical arm by moving it as little as possible.
+\newline 
+There are many different ways elevators operate but they all share a common set of operations. 
+\begin{itemize}
+\item Request merging: Adjacent on-disk sectors are merged into a single request.
+\item Back merging: New process immediately follows existing requests.
+\item Front merging: New process immediately precedes existing requests.
+\item Request sorting: Requests are kept in some form of sorted order.
+\item Starvation protection: Some form of operation that protects a process from starvation.
+\end{itemize}
+
+\section{Conclusion}
+FreeBSD and linux are both UNIX based operating systems and so it's no surprise that their I/O systems are so similar. The main difference is Linux's additional usage of blocks. The real outsider in this comparison is windows. Windows completely skipped the use of descriptors and uses a different method of I/O that utilizes a data structure. This data structure allows the data to be taken in at once and then accessed via a lightweight pointer to the structure.
+\newline
+\newline
+One type of I/O that seems incredibly wasteful is the type commonly found in USB devices (which are incredibly common). Polling I/O, while they may be useful in some areas make very little sense when it comes to USB device. Most USB devices are often in an idle state and using a polling method for them doesnt make much sense. A signal for new data coming in, or perhaps a signal to begin the polling until the device becomes idle would be more efficient.
+\newline
+I think the biggest reason for the differences between the I/O systems of linux or FreeBSD and the Windows system is that windows users often have a lot more external I/O devices than a linux or FreeBSD user would. As a result, windows had to create a different method for I/O that would allow for easier I/O to all the external devices. 
+
+
+\end{document}

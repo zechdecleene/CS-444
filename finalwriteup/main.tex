@@ -1,0 +1,198 @@
+\documentclass[a4paper,10pt,onecolumn]{article}
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+        
+        \textbf{Final Writing Assignment}
+        
+        \vspace{0.5cm}
+        CS444 Spring 2018
+        
+        \vspace{1.5cm}
+        
+        \textbf{Zech DeCleene}       
+    \end{center}
+\end{titlepage}
+
+
+\section{Processes, Threads, and CPU Scheduling}
+In Windows, FreeBSD, and Linux a process is defined as a running program. 
+\newline
+\newline
+\subsection{Windows}
+In windows a process is a structure that contains a virtual address space, executable code, open handles to system objects, security context, process identifiers, environmental variables, priority classes, a minimum and maximum set size, and at least one thread of execution. Each process in windows is started by a single thread, often called a primary thread. The primary thread is the beginning execution point from which any of its threads can create additional threads. \cite{about}
+\newline
+\newline
+Windows supports a feature called Preemptive Multitasking which allows the system to simultaneously execute as many threads as there are on the computer's processor. There are two main architectures for computers with multiple processors.
+\subsubsection{{N}on-{U}niform {M}emory {A}cess {(NUMA)}}
+The NUMA architecture is typically used to speed up processing speeds without putting more load on the processor bus. It does this because different processors are located closer to some parts of memory while farther from others. This allows the scheduler to assign CPU's to locations in memory that are closer to that processor allowing for quicker access to that part in memory.
+\newline
+\subsubsection{{S}ymmetric {M}ulti{P}rocessing {(SMP)}}
+The SMP Architecture, sometimes called the "shared everything" system, is a tightly coupled system that allows for multiprocessing and has shared memory and shared I/O buses or data paths. The advantage to this system is its ability to dynamically balance workloads between multiple processors.
+\newline
+\newline
+Lastly, windows uses something called the system scheduler to control multitasking. The system scheduler determines which thread receives the next processor time slice. The system scheduler uses a priority system that ranges from 0-31. Priority levels 0-15 are known as "normal" priorities while processes with a priority level of 16-31 have soft real-time priority.\cite{wikipedia_2018}
+\newline
+\newline
+\subsection{FreeBSD}
+FreeBSD is a lot like traditional UNIX, however unlike traditional UNIX which doesn't have any API or implementation for threading, FreeBSD does. FreeBSD is a called the modern UNIX with all the functionality of UNIX as well as preemptive multitasking and symmetrical multiprocessing support.\cite{bsd}
+\newline
+\newline
+The CPU scheduler in FreeBSD is divided into two parts. The low level scheduler and the high level scheduler.
+\subsubsection{The Low Level Scheduler}
+The low level scheduler is a simple scheduler that is meant to run very frequently. The low level scheduler runs every time a thread blocks and a new thread must be selected to run. This typically happens several thousands of times per second and as a result needs to make decisions very quickly with minimal information. To simplify the task the kernel maintains a run queue for each CPU in the system. When a task blocks the low level scheduler checks the run queue to determine which thread will run next.
+\newline
+\subsubsection{The High Level Scheduler}
+The high level scheduler is responsible for setting thread priorities to the run queue as well as what CPU's run queue the thread should be placed. To avoid contention each CPU has its own run queue for when two CPU's need a new thread at the same time. 
+\newline
+\newline
+\subsection{Linux}
+Like all the other operating systems mentioned, in linux a process is defined as a program in execution. Linux has two main types of processes, foreground and background.\newline
+Unlike the other operating systems mentioned, however, Linux has a unique implementation of threads. Each thread is implemented as a standard processes, meaning there is no special scheduling semantics or data structures. The kernel has no concept of a thread.
+\newline
+\newline
+Linux uses what is called a {C}ompletely {F}air {S}cheduling {(CFS)} algorithm. Each CPU has a run queue with time-slices for each process to run. The time-slices are alotted based on the a weight metric for each thread. Each CPU needs its own run queue so that context switching can be quicker. This creates the problem of load balancing the threads across all the CPUs. Because thread balancing is an expensive process the scheduler tries to do this only when necessary. \cite{themorningpaper}
+
+\subsection{Summary}
+One thing that each of these different operating systems do differently how they manage their threads. An operating system like Windows treats a thread as a lightweight process or an abstraction to provide quicker execution by allowing for multiprocessor work without creating another more taxing process. Linux however treats threads differently as they are a method for sharing resources between processes.\cite{love_2005} 
+
+\section{I/O and provided functionality}
+This section is about the differences in I/O functions as well as data structures that allow for those functions.
+\subsection{Windows}
+Windows processes I/O using something called I/O package requests or (IPRs) and Asynchronous I/O.
+Asynchronous I/O is required because I/O operations are typically much slower that simply processing data. The reason for this is because often I/O devices typically require the incorporation of mechanical devises which are orders of magnitude slower than electrical signals. 
+Being asynchronous, however, allows for new issues such as resource conflicts and other associated issues.
+\newline
+\newline
+Polling is a feature that allows for non-blocking synchronous I/O. Polling works by constantly checking the state or contents of the event buffer. Polling has one major drawback however and that is that it can waste CPU time by polling an idle I/O device. A good use for polling is typically in real-time gaming that are often always updating and rendering and are not often idle.
+\newline
+\newline
+I/O Package requests are data structures that describe the I/O request. Things such as buffer address, buffer size, and I/O function type. However, when the I/O data needs to be accessed, rather than passing a large number of smaller arguments, windows passes a single pointer that points to a persistent data structure. In addition the IRP can be put in a queue if the request cannot be performed immediately. Lastly, the I/O requests have a method to report completion. When a request is completed it reports back to the I/O manager by passing an address back to a routine for that purpose, the IoCompleteRequest routine.
+\newpage
+\subsection{FreeBSD}
+In Free BSD they use descriptors to reference I/O streams. A descriptor is a small unsigned integer that are obtained from the open and socket system calls. Descriptors are used to represent underlying objects supported by the kernel and are created by system calls for each specific object. Each descriptor then can have a read or write call made on them to transfer data. FreeBSD supports 3 main types of object descriptors; File, pipes, and sockets.
+\newline
+The first type of descriptor is the file descriptor. It is simply a linear array of bytes with at least one name. External I/O devices are also accessed via file descriptor. File descriptors exist until all names are deleted explicitly and no process holds a descriptor for it. 
+\newline
+The next type of descriptor is the pipe. Like a file, a pipe, is also a linear array of bytes. However, a pipe is solely used as an I/O stream. Pipes do not have names and so cannot be created using the open call. Instead they are created via the pipe system call and two descriptors are returned. One descriptor which accepts input and the other where the data is sent. Pipes are unidirectional so data only flows one way and are received in the order in which they are sent.
+\newline
+The last type of descriptor is the socket. A socket is a transient object that is used for interprocess communication and it only exists as long as there is a process that holds a descriptor of it. There are many different kinds of sockets that support various constraints such as preserving order, or reliability of delivery.
+\newline
+\newline
+\subsection{Linux}
+The Last operating system we will be talking about is the Linux operating system.The Linux machine provides the abstract machine interface, as device drivers, to the user. These device drivers take a hardware interface and remap it onto a standard interface with the kernel. For example all character devices have the same interface with the kernel. They are treated as files and have their information in a linear stream of bytes, much like FreeBSD. There are 5 ways device drivers typically operate:
+\begin{enumerate}
+\item Direct Memory Access (DMA). DMA works by first having the CPU initiate the transfer to the auxiliary hardware making the request, thus freeing the CPU to perform other tasks while the DMA device receives the data. Once the operation is completed it sends a signal back to notify that the process has been completed.
+\item Interrupt driven I/O is the next operation method of device drivers and it pairs with the last method. Through the use of a DMA or other external controller, I/O happens asynchronously and when completed it raises an interrupt signal.
+\item Processor I/O allows the CPU itself to handle all of the details of the I/O. This method is often very poor in performance.
+\item Polled I/O repeatedly checks the state of an event buffer on a loop. The process continues to check indefinitely and is a waste of CPU time when used on an idle device. USB devices are commonly known to use polling I/O.
+\item Memory Mapped I/O (MMIO) uses hardware registers that are mapped directly to the CPU's address space. Arduinos are a common example of MMIO in their use of macro's such as referring to a pin via PIN(\#).
+\end{enumerate}
+The other way Linux handles I/O is with something called a Block Device. In contrast with a character device, in which the data behaves as a stream of bytes, Block devices are random access, meaning the data does not need to be lined up. Block devices work by taking chunks of data of a fixed size. Each chunk of data, called a \textbf{sector}, defines the minimum addressable unit. The sizes of these sectors are hardware specific and are dependent of the driver developers. In software however blocks refer to the filesystem block size. Each read/write operation works in terms of complete blocks. 
+\newline
+The last thing I want to mention about the Linux I/O system is the use of elevators. Because a majority of the I/O devices used today are mechanical in nature (for example a hard disk drive) a series of algorithms have been developed to help minimize wasted time. These algorithms are known as elevators. One example of how these work, much like how real elevators work, is by sweeping in one direction until all requests are completed in that direction before turning around (or continuing back around to the start). This helps to reduce wasted time of the mechanical arm by moving it as little as possible.
+\newline 
+There are many different ways elevators operate but they all share a common set of operations. 
+\begin{itemize}
+\item Request merging: Adjacent on-disk sectors are merged into a single request.
+\item Back merging: New process immediately follows existing requests.
+\item Front merging: New process immediately precedes existing requests.
+\item Request sorting: Requests are kept in some form of sorted order.
+\item Starvation protection: Some form of operation that protects a process from starvation.
+\end{itemize}
+
+\subsection{Summary}
+FreeBSD and linux are both UNIX based operating systems and so it's no surprise that their I/O systems are so similar. The main difference is Linux's additional usage of blocks. The real outsider in this comparison is windows. Windows completely skipped the use of descriptors and uses a different method of I/O that utilizes a data structure. This data structure allows the data to be taken in at once and then accessed via a lightweight pointer to the structure.
+\newline
+\newline
+One type of I/O that seems incredibly wasteful is the type commonly found in USB devices (which are incredibly common). Polling I/O, while they may be useful in some areas make very little sense when it comes to USB device. Most USB devices are often in an idle state and using a polling method for them doesnt make much sense. A signal for new data coming in, or perhaps a signal to begin the polling until the device becomes idle would be more efficient.
+\newline
+I think the biggest reason for the differences between the I/O systems of linux or FreeBSD and the Windows system is that windows users often have a lot more external I/O devices than a linux or FreeBSD user would. As a result, windows had to create a different method for I/O that would allow for easier I/O to all the external devices. 
+
+\section{File Systems}
+File systems refer to the method at which files and directories are accessed and navigated through.
+\subsection{Windows}
+Windows uses a hierarchy of data structures in their file system. The lowest level of the system is the file which is just a local grouping of related data. Then comes directories, a directory can contain other directories as well as multiple files. One step above directories comes volumes which is a collection of directories. Often volumes are separated physically such as different hard drives.
+\newline
+\subsubsection{FAT}
+Windows uses 3 main file systems to organize data. The first is a {F}ile {A}llocation {T}able or {(FAT)}. This is the most simplistic version of the three. This table is stored at the top of each volume along with a copy of the FAT table in case the original gets damaged. Disks formatted with FAT are allocated with something called clusters, the size of which is determined by the size of the volume. When a file gets created an entry is also created in the directory. The entry into the FAT table either indicates that the cluster is the last one or it points to the next cluster. Additionally FAT tables are not organized and are implemented with the fit-first algorithm. The downside to FAT storage is that because the table must be updated with every file, performance is dramatically lost and it is not recommended to use FAT with drives or partitions over 200MB.
+
+\subsubsection{HPFS}
+With the market for network servers growing and larger storage devices becoming more popular a new file system needed to be created that could extend the naming system, organize saved data, and provide better security. HPFS maintains the directory organization style of FAT but it also automatically sorts the directories based on filename. Additionally the use of clusters was lost and sectors were introduced. Sectors are sections of memory that are 512 MB in size, and they help to reduce lost disk space. Because clusters are no longer used a new entry point is needed. The FNODE is an entry point that can contain the file's data, pointers to the file's data or to other data structures eventually pointing to the file's data. 
+\newline
+\newline
+HPFS also organizes its files and attempts to allocate as much of a file in contiguous sectors as possible. This is done in order to increase speed when doing sequential processing of a file.
+\newline
+\newline
+HPFS introduces new data structures called the \textbf{Super Block} and the \textbf{Spare Block}.
+\newline
+The Super Block is located in logical sector 16 and contains a pointer to the FNODE of the root directory. The danger of this is that if the super block we're to be lost or corrupted then the entire contents of the partition would also be lost and very difficult to recover. 
+\newline
+The Spare Block is located in logical sector 17 which contains a table of "hot fixes". When a bad sector is detected the "hot fix" entry is used to logically point to the next existing good sector in place of the bad sector. This method of handling errors is known as hot fixing. 
+\newline
+\newline
+Because of the overhead that goes into creating and maintaining a HPFS file system it is not recommended for use with partitions with less that 200MB. Additionally, HPFS experiences performance degradation after 400MB so it is only recommended to use HPFS if you are dealing with drives or partitions between 200MB and 400MB.
+\subsubsection{NTFS}
+Lastly we have NTFS. Unlike FAT or HPFS, NTFS does not use any special objects, tables, or dependencies on underlying hardware, such as sectors. 
+\newline
+\newline
+NTFS has three identifying areas that we're addressed. The first is that it is recoverable. NTFS is a recoverable file system because it keeps track of transactions against the file system. When a CHKDSK is performed on FAT or HPFS, the consistency of pointers within the directory, allocation, and file tables is being checked. Under NTFS, a log of transactions against these components is maintained so that CHKDSK need only roll back transactions to the last commit point in order to recover consistency within the file system.
+\newline
+\newline
+The second is the removal of fatal single sector failures. In FAT and HPFS structures if a sector that is the location of one of the special structures fails, then a single sector failure will occur. NTFS avoids this by not using special objects as well as keeping multiple copies of the master file table. 
+\newline
+The last is the incorporation of hot fixes to NTFS very similar to the implementation in HPFS.
+
+\subsection{FreeBSD and Linux}
+FreeBSD has two file systems native to the OS. The first is simply the Unix File system {(UFS)}, which Linux also uses, and the Z-File system. 
+\subsubsection{Unix File System}
+The Unix file system has three main file types. Ordinary files, directories, and special files. 
+Unix uses a hierarchical file system structure. The root directory is at the base of the file system and all other directories spread out from there. The Unix file system has 4 main properties.
+\begin{itemize}
+\item Root directory {(/)} that contains all other directories
+\item Each file or directory is uniquely identified by its name, the directory in which it resides, and a unique identifier. These unique identifiers are integers and are typically referred to as Inodes
+\item  By convention, the root directory has an inode number of 2 and the lost+found directory has an inode number of 3. Inode numbers 0 and 1 are not used. File inode numbers can be seen by specifying the -i option to ls command.
+\item It is self-contained.
+\end{itemize}
+It is also worth noting that directories in the Unix File System do not contain files. Instead the directories contain file names paired with a reference to that file's inode or access point. 
+
+\subsubsection{Z-File system}
+The Z File system is an advance file system designed to address many issues of previous file system designs. There are three main attributes and design goals of the Z file system. 
+\newline 
+\newline
+The first is data integrity. All data contains a checksum of said data. A checksum is an algorithm that checks the data in a file to ensure validity. If the file is not valid it will attempt to recover the data from any available redundancy.
+\newline
+\newline
+The second is pooled storage. All physical storage devices are added to a pool and shared storage space is allocated from the pool. Space is available to all file systems and the size of the pool can be changed by simply adding or removing physical storage devices.
+\newline
+\newline
+The last design goal is to implement it in a way that gives users excellent performance. It does this by using multiple caching mechanisms such as ARC, L2ARC, and ZIL. All of which are advanced memory-based read and write caches.
+\subsection{Summary}
+Windows and UNIX use very different file systems. Windows being more complex, with added structures are more advanced procedures, and UNIX with its very minimalistic approach. Both directed towards their own audiences. Windows is an operating system used by everyone, and as such most of their processes are dealt with behind the scenes. Additionally windows seems to be aimed toward dealing with much larger sets of data, and as such needs a very good algorithm to sort and manage the data. 
+\newline
+UNIX on the other hand is often used by more tech savy individuals and often they do not require as much memory as windows user. As a result the simple Unix file system has remained the same lightweight and simple system it is. 
+ 
+\section{Conclusion}
+Throughout all of these topics one major theme seems to standout. Windows often has a much more complex system in place. Windows has a much larger audience and in addition to that, windows users often do much more I/O, file management, and run processes. Even more impressive is that the users often don't know they're doing so much, its because of the speed and transparency of these process that windows has done so well. Unix on the other hand is more obvious about its operations and typically a Linux or FreeBSD user knows a little more about what is happening behind the scenes. As a result FreeBSD and Linux are typically more lightweight and simplified, allowing for the user to add additional layers should they choose. Linux and FreeBSD users also do not move large amounts of data or process quite as much I/O and as a result these simplified versions make the most sense. 
+\newline
+In conclusion each operating system has a very defined purpose and audience and as a result perform their internal actions accordingly.
+
+\bibliographystyle{IEEEtran}
+\bibliography{sample}
+
+\end{document}

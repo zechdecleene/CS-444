@@ -1,0 +1,155 @@
+\documentclass[a4paper, 10pt, draftclsnofoot, onecolumn]{article}
+\usepackage[letterpaper,margin=0.75in]{geometry}
+
+\begin{document}
+%Header-Make sure you update this information!!!!
+\noindent
+\large\textbf{Homework1} \hfill \\
+\normalsize CS444 \hfill Group 1: Zech DeCleene, Chris Breniser, Dylan Davis \\
+Spring 2018 \hfill Date: 04/12/18 \\
+
+\section*{Abstract}
+The main focus of Homework 1 was to setup and build our virtual machine. This was accomplished by creating a directory in the /scratch/spring2018/ directory, using the ACL to allow permissions to all group members and cloning a repository from git.yoctoproject.org/linux-yocto-3.19. We then built the Virtual machine and ran it on port 5501 which we were able to successfully connect to. Lastly we made a commit and pushed it onto our branch. 
+\section*{Commands}
+
+\begin{itemize}
+	\item mkdir /scratch/spring2018/group1
+    \item /scratch/bin/acl\_open group1 decleenz
+    \item /scratch/bin/acl\_open group1 davisdy
+   	\item cd /scratch/spring2018/group1
+	\item git clone --branch v3.19.2 git://git.yoctoproject.org/linux-yocto-3.19
+	\item cp /scratch/opt/poky/1.8/environment-setup-i586-poky-linux .
+    \item cp /scratch/files/bzImage-qemux86.bin .
+    \item cp /scratch/files/core-image-lsb-sdk-qemux86.ext4 .
+    \item cd linux-yocto-3.19
+    \item git branch -b os2 
+	\item cp /scratch/files/config-3.19.2-yocto-standard .config 
+    \item git branch -b hw1
+    \item git describe --tags
+    \item source environment-setup-i586-poky-linux
+    \item make menuconfig
+    \item qemu-system-i386 -gdb tcp::5501 -S -nographic -kernel bzImage-qemux86.bin -drive file=core-image-lsb-sdk-qemux86.ext4,if=virtio -enable-kvm -net none -usb -localtime --no-reboot --append "root=/dev/vda rw console=ttyS0 debug".
+    \item make -4j all
+    \item gdb -tui
+    \item target remote:5501
+    \item continue
+
+\end{itemize}
+
+\section{Flags}
+\subsection{-gdb tcp::5501}
+\begin{itemize}
+\item Opens gdb server on port 5501
+\end{itemize}
+
+\subsection{-S}
+\begin{itemize}
+\item Do not start CPU at startup
+\end{itemize}
+
+\subsection{-nographic}
+\begin{itemize}
+\item Disables graphical output so qemu is a simple command line application
+\end{itemize}
+
+\subsection{-kernel}
+\begin{itemize}
+\item use bzImage as kernel image
+\end{itemize}
+
+\subsection{-drive}
+\begin{itemize}
+\item Define a new drive file
+\item the [file] option is used to define what disk image to use with this file
+\item the [if] option defines what type of interface to use
+\end{itemize}
+
+\subsection{-enable-kvm}
+\begin{itemize}
+\item Enables kvn virtualization support
+\end{itemize}
+
+\subsection{-net none}
+\begin{itemize}
+\item Used to indicate that no network devices should be configured
+\end{itemize}
+
+\subsection{-usb}
+\begin{itemize}
+\item Enables USB driver
+\end{itemize}
+
+\subsection{-localtime}
+\begin{itemize}
+\item Sets the real time clock to local time
+\end{itemize}
+
+\subsection{-no-reboot}
+\begin{itemize}
+\item Exit instead of rebooting
+\end{itemize}
+
+\subsection{-appent {\it cmdline}}
+\begin{itemize}
+\item Use {\it cmdline} as kernel command line
+\end{itemize}
+
+\section{Questions}
+\subsection{What do you think the main point of this assignment is?}
+\begin{itemize}
+\item Get an idea of creating a linux VM using the engr server. 
+\end{itemize}
+
+\subsection{How did you personally approach the problem? Design decisions, algorithm, etc.}
+\begin{itemize}
+\item This required a lot of reasearch and time before even getting started. We searched online for examples and proper procedures regarding vm setup on the command line. We played around and started over once or twice while testing. 
+\end{itemize}
+
+\subsection{How did you ensure your solution was correct? Testing details, for instance.}
+\begin{itemize}
+\item We did not see and notable errors and were able to use the Vm as we would any other linux command line. We would attemt to run  commands listed on the project page and were met with either progress, or the risk of starting over. eventualy we did thing in the right order with the rigth flags. 
+\end{itemize}
+
+\subsection{What did you learn?}
+\begin{itemize}
+\item Researching for low level VM generation yelds very few intro level result, leading to lots of open tabs with many different search terms to get acquainted to. I was suprised that gdb was used kickstart our cpu to start up our VM. We were all unaware that it had any uses like that. 
+\end{itemize}
+
+\section{Git Log}
+\begin{table}[h]
+\centering
+\caption{Repo Log}
+\label{my-label}
+\begin{tabular}{lllll}
+commit 87d04188da7c1b5da50bd543cdbd39c747bdc9b8 &  &  &  &  \\
+	Author: Zechariah DeCleene                      &  &  &  &  \\
+	Date:,Thu Apr 12 18:27:05 2018 -0700,           &  &  &  &  \\
+	built kernel                                    &  &  &  & 
+\end{tabular}
+\end{table}
+
+\section{Work Log}
+\begin{itemize}
+\item 4/12/18 3:45-7:00pm - Whole group met up
+\begin{itemize}
+\item Created group folder
+\item Pulled in necessary files
+\item Cloned Git repository
+\item Created OS2 and HW1 branches
+\item Sourced environment
+\item Built Kernel
+\item Started VM
+\item Accessed VM terminal
+\item Started .Tex document
+\end{itemize}
+\end{itemize}
+
+\begin{itemize}
+\item 4/15/18 4:00-6:15 - Zech \& Chris
+\begin{itemize}
+\item LaTex Write-up
+\item LaTex Makefile
+\end{itemize}
+\end{itemize}
+
+\end{document}
